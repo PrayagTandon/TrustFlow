@@ -1,30 +1,20 @@
-# Stage 1: Build
-FROM node:20-alpine as builder
-
+# Use Node.js image
+FROM node:18
+ 
+# Set working directory
 WORKDIR /app
-
-# Copy package files first to leverage Docker cache
+ 
+# Copy package.json first (better caching)
 COPY package*.json ./
-COPY yarn.lock ./
-
+ 
 # Install dependencies
-RUN npm ci --silent
-
-# Copy source code
+RUN npm install
+ 
+# Copy the entire React app
 COPY . .
-
-# Build the application
-RUN npm run build
-
-# Stage 2: Serve
-FROM nginx:alpine
-COPY --from=builder /app/build /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY security-headers.conf /etc/nginx/conf.d/
-
-# Expose port 80
-EXPOSE 80
-
-# Add healthcheck
-HEALTHCHECK --interval=30s --timeout=3s \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1
+ 
+# Expose React's port
+EXPOSE 3000
+ 
+# Start the React app
+CMD ["npm", "start"]
